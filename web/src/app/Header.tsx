@@ -19,7 +19,9 @@ import {
       <>
         <div>
           <div className="navbar bg-base-100 flex justify-between">
-            <a className="btn btn-ghost text-xl">Booksology</a>
+          <header className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Booksology</h1>
+      </header>
             <div style={{ padding: '10px' }}>
             <Wallet>
   <ConnectWallet className='bg-blue-800 text-white'>
