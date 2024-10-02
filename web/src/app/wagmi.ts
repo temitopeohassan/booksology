@@ -7,7 +7,7 @@ export const wagmiConfig = createConfig({
   multiInjectedProviderDiscovery: false,
   connectors: [
     coinbaseWallet({
-      appName: 'Buidl On Base Starter',
+      appName: 'Booksology',
       preference: 'all', // set this to `all` to use EOAs as well
       version: '4',
     }),

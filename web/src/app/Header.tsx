@@ -9,11 +9,9 @@ import {
     Address,
     Avatar,
     Name,
-    Badge,
     Identity,
     EthBalance,
   } from '@coinbase/onchainkit/identity';
-  import { color } from '@coinbase/onchainkit/theme';
 
   export default function Header() {
 

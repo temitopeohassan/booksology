@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import OnchainProviders from './OnchainProviders';
 import "./globals.css";
 import { ReactNode } from 'react'; // Import ReactNode
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Booksology | The Bookstore for the Modern Age",
