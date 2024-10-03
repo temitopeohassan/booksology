@@ -1,29 +1,22 @@
 import type { Metadata } from "next";
-import OnchainProviders from './OnchainProviders';
 import "./globals.css";
-import { ReactNode } from 'react'; // Import ReactNode
-
+import { ReactNode } from 'react';
+import RootLayout from './RootLayout';
 
 export const metadata: Metadata = {
   title: "Booksology | The Bookstore for the Modern Age",
   description: "Booksology is a bookstore for the modern age. It is a place where you can find all your favorite books, and more.",
 };
 
-// Define the type for the props
-type RootLayoutProps = {
+type LayoutProps = {
   children: ReactNode;
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
-      <head>
-        {/* Add any head tags here if needed */}
-      </head>
       <body>
-        <OnchainProviders>
-          {children}
-        </OnchainProviders>
+        <RootLayout>{children}</RootLayout>
       </body>
     </html>
   );

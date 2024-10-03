@@ -1,6 +1,13 @@
-import { Search, Filter, ChevronDown } from "lucide-react";
+import { Search } from "lucide-react";
 
-const BookCard = ({ title, author, price, cover }) => (
+interface BookProps {
+  title: string;
+  author: string;
+  price: number;
+  cover: string;
+}
+
+const BookCard = ({ title, author, price, cover }: BookProps) => (
   <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
     <div className="aspect-[2/3] bg-gray-200">
       <img src={cover} alt={title} className="w-full h-full object-cover" />
