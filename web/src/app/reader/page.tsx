@@ -10,7 +10,7 @@ export default function Reader() {
   const [theme, setTheme] = useState('light');
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+
   
   const bookContent = `
     Chapter 1: The Genesis of Blockchain
