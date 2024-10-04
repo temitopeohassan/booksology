@@ -6,7 +6,11 @@
     "strict": true,
     "noEmit": false,
     "esModuleInterop": true,
+    "target": "es6",
     "module": "esnext",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -20,10 +24,9 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "target": "es2016",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "server.ts"],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }
