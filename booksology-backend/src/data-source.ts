@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm"
 import { Book } from "./entities/Book"
+import * as process from 'process';
 
 export const AppDataSource = new DataSource({
     type: "postgres",

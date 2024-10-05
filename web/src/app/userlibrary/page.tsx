@@ -1,4 +1,5 @@
 import { BookOpen, Clock, BookMarked } from 'lucide-react';
+import Link from "next/link"
 
 const BookCard = ({ title, author, cover, progress }: {
   title: string;
@@ -12,7 +13,7 @@ const BookCard = ({ title, author, cover, progress }: {
       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
         <div className="flex justify-between items-center">
           <span>{progress}% complete</span>
-          <button className="bg-blue-500 px-3 py-1 rounded text-sm">Read</button>
+          <button className="bg-blue-500 px-3 py-1 rounded text-sm"><Link href="/reader" legacyBehavior passHref>Read</Link></button>
         </div>
       </div>
     </div>

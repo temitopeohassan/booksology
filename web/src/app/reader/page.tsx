@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 
 type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 
@@ -35,9 +36,9 @@ export default function Reader() {
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 w-full p-4 flex justify-between items-center bg-opacity-90 backdrop-blur-sm z-10">
-        <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+        <Link href="/userlibrary" legacyBehavior passHref><button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
           <ChevronLeft className="w-6 h-6" />
-        </button>
+        </button></Link>
         <div className="flex space-x-4">
           <button 
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"

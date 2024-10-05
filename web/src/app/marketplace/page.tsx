@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import Link from "next/link"
 
 interface BookProps {
   title: string;
@@ -17,9 +18,12 @@ const BookCard = ({ title, author, price, cover }: BookProps) => (
       <p className="text-gray-600 text-sm">{author}</p>
       <div className="mt-2 flex justify-between items-center">
         <span className="font-bold">{price} ETH</span>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">
+        <Link 
+          href="/bookdetails" 
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm inline-block"
+        >
           Purchase
-        </button>
+        </Link>
       </div>
     </div>
   </div>
