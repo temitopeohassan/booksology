@@ -51,7 +51,7 @@ export default function Home() {
     <>
         <div className="container mx-auto px-4 py-8">
        <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Booksology</h1>
+        <h1 className="text-3xl font-bold">Welcome To Booksology</h1>
       </header>
 
       <section className="mb-12">

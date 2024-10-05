@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import bookRoutes from './bookRoutes';
-import userRoutes from './userRoutes';
+import bookRoutes from './bookRoute';  // Changed from './bookRoutes'
+import userRoutes from './userRoute';  // Changed from './userRoutes'
 
 const router = Router();
 
