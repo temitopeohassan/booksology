@@ -14,6 +14,7 @@ contract eBookNFTTest is Test {
         owner = address(this);
         user1 = address(0x1);
         user2 = address(0x2);
+        vm.prank(owner);
         nft = new eBookNFT();
     }
 
@@ -22,51 +23,51 @@ contract eBookNFTTest is Test {
         string memory encryptedContent = "Encrypted content";
         string memory tokenURI = "https://example.com/metadata";
 
+        vm.prank(user1);
         uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
         
-        assertEq(nft.ownerOf(tokenId), owner);
+        assertEq(nft.ownerOf(tokenId), user1);
         (string memory retrievedTitle, address retrievedAuthor) = nft.getEBookMetadata(tokenId);
         assertEq(retrievedTitle, title);
-        assertEq(retrievedAuthor, owner);
+        assertEq(retrievedAuthor, user1);
     }
 
     function testGetEncryptedContent() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
+        vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
         
+        vm.prank(user1);
         string memory retrievedContent = nft.getEncryptedContent(tokenId);
-        assertEq(retrievedContent, encryptedContent);
+        assertEq(retrievedContent, "Encrypted content");
     }
 
     function testLockAndUnlockEBook() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
+        vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
         
+        vm.prank(user1);
         nft.lockEBook(tokenId);
+        
+        vm.prank(user1);
         vm.expectRevert("eBook is locked");
         nft.getEncryptedContent(tokenId);
 
+        vm.prank(user1);
         nft.unlockEBook(tokenId);
+        
+        vm.prank(user1);
         string memory retrievedContent = nft.getEncryptedContent(tokenId);
-        assertEq(retrievedContent, encryptedContent);
+        assertEq(retrievedContent, "Encrypted content");
     }
 
     function testSetRoyalty() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
+        vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
         
         address royaltyReceiver = address(0x3);
         uint96 royaltyFee = 500; // 5%
 
+        vm.prank(user1);
         nft.setRoyalty(tokenId, royaltyReceiver, royaltyFee);
 
         (address retrievedReceiver, uint256 royaltyAmount) = nft.royaltyInfo(tokenId, 10000);
@@ -75,48 +76,38 @@ contract eBookNFTTest is Test {
     }
 
     function testTransferEBook() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
+        vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
         
-        nft.transferFrom(owner, user1, tokenId);
-        assertEq(nft.ownerOf(tokenId), user1);
+        vm.prank(user1);
+        nft.transferFrom(user1, user2, tokenId);
+        assertEq(nft.ownerOf(tokenId), user2);
     }
 
     function testRecordSale() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
+        vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
         
         vm.expectEmit(true, true, true, true);
-        emit eBookNFT.eBookSold(tokenId, owner, user1, 1 ether);
+        emit eBookNFT.eBookSold(tokenId, user1, user2, 1 ether);
         
-        nft.recordSale(tokenId, owner, user1, 1 ether);
+        vm.prank(owner);
+        nft.recordSale(tokenId, user1, user2, 1 ether);
     }
 
     function testFailGetEncryptedContentNotOwner() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
-        
         vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
+        
+        vm.prank(user2);
         nft.getEncryptedContent(tokenId);
     }
 
     function testFailSetRoyaltyNotOwner() public {
-        string memory title = "Test Book";
-        string memory encryptedContent = "Encrypted content";
-        string memory tokenURI = "https://example.com/metadata";
-
-        uint256 tokenId = nft.mintEBook(title, encryptedContent, tokenURI);
-        
         vm.prank(user1);
+        uint256 tokenId = nft.mintEBook("Test Book", "Encrypted content", "https://example.com/metadata");
+        
+        vm.prank(user2);
         nft.setRoyalty(tokenId, user2, 500);
     }
 }
