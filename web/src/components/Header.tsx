@@ -56,9 +56,9 @@ export default function Header() {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/marketplace" legacyBehavior passHref>
+              <Link href="/bookstore" legacyBehavior passHref>
                 <NavigationMenuLink className="hover:font-bold transition-all">
-                  Market Place
+                  Book Store
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
@@ -77,6 +77,13 @@ export default function Header() {
               </Link>
             </NavigationMenuItem>
           </NavigationMenuList>
+            <NavigationMenuItem>
+              <Link href="/booksforsale" legacyBehavior passHref>
+                <NavigationMenuLink className="hover:font-bold transition-all">
+                  Books For Sale
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
         </NavigationMenu>
 
         {/* Hamburger Icon for mobile */}

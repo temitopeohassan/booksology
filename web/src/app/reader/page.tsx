@@ -1,29 +1,40 @@
 "use client"
 import Link from "next/link"
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Settings, Bookmark, Sun, Moon, Type, X } from 'lucide-react';
 
 type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Settings, Bookmark, Sun, Moon, Type, X } from 'lucide-react';
+interface BookContent {
+  title: string;
+  author: string;
+  content: string;
+}
 
 export default function Reader() {
   const [fontSize, setFontSize] = useState<FontSize>('medium');
   const [theme, setTheme] = useState('light');
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [bookContent, setBookContent] = useState<BookContent | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  
-  const bookContent = `
-    Chapter 1: The Genesis of Blockchain
-    In the beginning, there was Bitcoin. Created in the wake of the 2008 financial crisis, 
-    this revolutionary technology introduced the world to the concept of a decentralized, 
-    peer-to-peer electronic cash system. But what started as a solution for digital 
-    currency would soon evolve into something much greater.
-    Blockchain, the underlying technology of Bitcoin, represented a paradigm shift in how we 
-    think about trust, transparency, and decentralization. Its potential applications extend 
-    far beyond cryptocurrency, touching every industry from finance to healthcare, from supply 
-    chain management to digital identity verification.
-  `;
+  useEffect(() => {
+    const fetchBookContent = async () => {
+      try {
+        // Replace '1' with the actual bookId, which you might get from URL params or props
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reader/1`);
+        const data = await response.json();
+        setBookContent(data);
+      } catch (error) {
+        console.error('Error fetching book content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookContent();
+  }, []);
 
   const fontSizes: Record<FontSize, string> = {
     small: '12px',
@@ -31,6 +42,14 @@ export default function Reader() {
     large: '20px',
     xlarge: '24px',
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!bookContent) {
+    return <div>Error loading book content</div>;
+  }
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
@@ -103,8 +122,10 @@ export default function Reader() {
 
       {/* Main Content */}
       <main className="pt-16 pb-16 px-4 md:px-8 lg:px-16 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-2">{bookContent.title}</h1>
+        <h2 className="text-xl mb-4">{bookContent.author}</h2>
         <div style={{ fontSize: fontSizes[fontSize as FontSize] }}>
-          {bookContent}
+          {bookContent.content}
         </div>
       </main>
 
