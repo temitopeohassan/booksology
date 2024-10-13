@@ -4,8 +4,8 @@
   "description": "Backend for Booksology",
   "main": "src/server/index.js",
   "scripts": {
-    "start": "node src/server/index.js",
-    "dev": "nodemon src/server/index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
