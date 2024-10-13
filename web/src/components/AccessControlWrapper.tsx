@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { useAccessControl } from '../contexts/AccessControlContext';
 import { hasIdentityNFT } from '../utils/nftUtils';

@@ -1,5 +1,13 @@
 "use client"
-import { BookOpen, BookMarked, Library, LucideIcon } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { BookOpen, BookMarked, Library } from "lucide-react";
+import Image from 'next/image';
+
+interface Category {
+  name: string;
+  bookCount: number;
+  icon: keyof typeof iconComponents;
+}
 
 interface FeaturedBookProps {
   title: string;
@@ -10,11 +18,11 @@ interface FeaturedBookProps {
 const FeaturedBook: React.FC<FeaturedBookProps> = ({ title, author, cover }) => (
   <div className="relative group">
     <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
-      <img src={cover} alt={title} className="w-full h-full object-cover" />
+      {cover && <Image src={cover} alt={title || 'Book cover'} width={200} height={300} objectFit="cover" />}
     </div>
     <div className="mt-2">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-gray-600">{author}</p>
+      <h3 className="text-lg font-semibold">{title || 'Unknown Title'}</h3>
+      <p className="text-gray-600">{author || 'Unknown Author'}</p>
     </div>
   </div>
 );
@@ -22,35 +30,66 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ title, author, cover }) => 
 interface CategoryCardProps {
   name: string;
   bookCount: number;
-  Icon: LucideIcon;
+  icon: keyof typeof iconComponents;
 }
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ name, bookCount, Icon }) => (
-  <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-    <Icon className="w-8 h-8 mb-2 text-blue-500" />
-    <h3 className="font-semibold">{name}</h3>
-    <p className="text-sm text-gray-500">{bookCount} books</p>
-  </div>
-);
+const iconComponents = {
+  BookOpen,
+  BookMarked,
+  Library,
+};
 
-export default function Home() {
-
-  const featuredBooks = [
-    { title: "The Blockchain Revolution", author: "Sarah Johnson", cover: "/api/placeholder/200/300" },
-    { title: "Digital Horizons", author: "Mike Chen", cover: "/api/placeholder/200/300" },
-    { title: "Web3 Futures", author: "Alex Thompson", cover: "/api/placeholder/200/300" },
-  ];
-
-  const categories = [
-    { name: "Fiction", bookCount: 1250, icon: BookOpen },
-    { name: "Non-Fiction", bookCount: 850, icon: BookMarked },
-    { name: "Academic", bookCount: 500, icon: Library },
-  ];
+const CategoryCard: React.FC<CategoryCardProps> = ({ name, bookCount, icon }) => {
+  const IconComponent = iconComponents[icon];
 
   return (
-    <>
-        <div className="container mx-auto px-4 py-8">
-       <header className="flex justify-between items-center mb-8">
+    <div className="border rounded-lg p-4">
+      <IconComponent className="w-6 h-6" />
+      <h3 className="text-lg font-semibold">{name}</h3>
+      <p>{bookCount} books</p>
+    </div>
+  );
+};
+
+export default function Home() {
+  const [featuredBooks, setFeaturedBooks] = useState<FeaturedBookProps[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newReleases, setNewReleases] = useState<FeaturedBookProps[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [featuredRes, categoriesRes, newReleasesRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/featured-books`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/new-releases`)
+        ]);
+
+        const featuredData = await featuredRes.json();
+        const categoriesData = await categoriesRes.json();
+        const newReleasesData = await newReleasesRes.json();
+
+        console.log('Featured Books:', featuredData);
+        console.log('Categories:', categoriesData);
+        console.log('New Releases:', newReleasesData);
+
+        setFeaturedBooks(Array.isArray(featuredData) ? featuredData : []);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setNewReleases(Array.isArray(newReleasesData) ? newReleasesData : []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setFeaturedBooks([]);
+        setCategories([]);
+        setNewReleases([]);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Welcome To Booksology</h1>
       </header>
 
@@ -58,7 +97,7 @@ export default function Home() {
         <h2 className="text-2xl font-semibold mb-4">Featured Books</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {featuredBooks.map((book, index) => (
-            <FeaturedBook key={index} {...book} />
+            <FeaturedBook key={index} title={book.title} author={book.author} cover={book.cover} />
           ))}
         </div>
       </section>
@@ -66,8 +105,8 @@ export default function Home() {
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-4">New Releases</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((_, index) => (
-            <div key={index} className="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+          {newReleases.map((book, index) => (
+            <FeaturedBook key={index} title={book.title} author={book.author} cover={book.cover} />
           ))}
         </div>
       </section>
@@ -76,7 +115,7 @@ export default function Home() {
         <h2 className="text-2xl font-semibold mb-4">Categories</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {categories.map((category, index) => (
-            <CategoryCard key={index} {...category} Icon={category.icon} />
+            <CategoryCard key={index} {...category} />
           ))}
         </div>
       </section>
@@ -88,6 +127,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-    </>
   );
 }

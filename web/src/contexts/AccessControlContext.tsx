@@ -1,3 +1,4 @@
+"use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { ACCESSCONTROL_CONTRACT_ADDRESS, ACCESSCONTROL_CONTRACT_ABI } from '../app/constants';

@@ -1,5 +1,7 @@
+"use client"
 import { Search } from "lucide-react";
 import Link from "next/link"
+import { useEffect, useState } from 'react';
 
 interface BookProps {
   title: string;
@@ -30,15 +32,62 @@ const BookCard = ({ title, author, price, cover }: BookProps) => (
 );
 
 export default function Marketplace() {
-  const categories = ["All", "Fiction", "Non-Fiction", "Academic", "Comics", "Poetry"];
-  const books = [
-    { title: "The Future of DeFi", author: "Elena Rodriguez", price: 0.05, cover: "/api/placeholder/200/300" },
-    { title: "Crypto Economics", author: "David Lee", price: 0.03, cover: "/api/placeholder/200/300" },
-    { title: "Web3 Design Patterns", author: "Chris Morgan", price: 0.04, cover: "/api/placeholder/200/300" },
-    { title: "Blockchain Basics", author: "Sophie Chen", price: 0.02, cover: "/api/placeholder/200/300" },
-    { title: "Smart Contract Security", author: "Marcus Johnson", price: 0.06, cover: "/api/placeholder/200/300" },
-    { title: "NFT Revolution", author: "Anna White", price: 0.03, cover: "/api/placeholder/200/300" },
-  ];
+  const [categories, setCategories] = useState<string[]>([]);
+  const [books, setBooks] = useState<BookProps[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [sort, setSort] = useState('latest');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('`${process.env.NEXT_PUBLIC_API_URL}/marketplace/categories`');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        const queryParams = new URLSearchParams({
+          ...(searchTerm && { search: searchTerm }),
+          ...(minPrice && { minPrice }),
+          ...(maxPrice && { maxPrice }),
+          ...(sort !== 'latest' && { sort })
+        });
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/books?${queryParams}`);
+        const data = await response.json();
+        setBooks(data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBooks();
+  }, [searchTerm, minPrice, maxPrice, sort]);
+
+  const handleCategoryToggle = (category: string) => {
+    const newCategories = new Set(selectedCategories);
+    if (newCategories.has(category)) {
+      newCategories.delete(category);
+    } else {
+      newCategories.add(category);
+    }
+    setSelectedCategories(newCategories);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -52,15 +101,33 @@ export default function Marketplace() {
               <div>
                 <label className="block text-sm font-medium mb-2">Price Range</label>
                 <div className="flex gap-2">
-                  <input type="number" placeholder="Min" className="w-1/2 p-2 border rounded" />
-                  <input type="number" placeholder="Max" className="w-1/2 p-2 border rounded" />
+                  <input 
+                    type="number" 
+                    placeholder="Min" 
+                    className="w-1/2 p-2 border rounded"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Max" 
+                    className="w-1/2 p-2 border rounded"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Categories</label>
-                {categories.map((category, index) => (
-                  <div key={index} className="flex items-center mb-2">
-                    <input type="checkbox" id={category} className="mr-2" />
+                {categories.map((category) => (
+                  <div key={category} className="flex items-center mb-2">
+                    <input 
+                      type="checkbox" 
+                      id={category} 
+                      className="mr-2"
+                      checked={selectedCategories.has(category)}
+                      onChange={() => handleCategoryToggle(category)}
+                    />
                     <label htmlFor={category}>{category}</label>
                   </div>
                 ))}
@@ -76,24 +143,34 @@ export default function Marketplace() {
                 type="text"
                 placeholder="Search books..."
                 className="w-full p-2 pl-10 border rounded-lg"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Sort by:</span>
-              <select className="border rounded-lg p-2">
-                <option>Latest</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
+              <select 
+                className="border rounded-lg p-2"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="latest">Latest</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
               </select>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map((book, index) => (
-              <BookCard key={index} {...book} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {books.map((book, index) => (
+                <BookCard key={index} {...book} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

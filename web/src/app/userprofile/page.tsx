@@ -1,29 +1,107 @@
+"use client"
 import { User, Settings, History, CreditCard } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Address,
+  EthBalance,
+} from '@coinbase/onchainkit/identity';
+import { ConnectWallet, Wallet } from '@coinbase/onchainkit/wallet';
+
+interface PersonalInfo {
+  displayName: string;
+  email: string;
+  bio: string;
+}
+
+interface Transaction {
+  id: string;
+  type: string;
+  book: string;
+  amount: string;
+  date: string;
+}
+
+interface Preferences {
+  emailNotifications: boolean;
+  showReadingProgress: boolean;
+  theme: string;
+}
 
 export default function UserProfile() {
-  const transactions = [
-    { 
-      id: '0x1234...5678',
-      type: 'Purchase',
-      book: 'The Future of DeFi',
-      amount: '0.05 ETH',
-      date: '2024-03-15'
-    },
-    { 
-      id: '0x5678...9012',
-      type: 'Sale',
-      book: 'Crypto Trading Guide',
-      amount: '0.03 ETH',
-      date: '2024-03-10'
-    },
-    { 
-      id: '0x9012...3456',
-      type: 'Purchase',
-      book: 'Web3 Development',
-      amount: '0.04 ETH',
-      date: '2024-03-05'
-    },
-  ];
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [preferences, setPreferences] = useState<Preferences | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const [personalInfoRes, transactionsRes, preferencesRes] = await Promise.all([
+          fetch('`${process.env.API_URL}/api/profile/personal-info`'),
+          fetch('`${process.env.API_URL}/api/profile/transactions`'),
+          fetch('`${process.env.API_URL}/api/profile/preferences`')
+        ]);
+
+        const personalInfoData = await personalInfoRes.json();
+        const transactionsData = await transactionsRes.json();
+        const preferencesData = await preferencesRes.json();
+
+        setPersonalInfo(personalInfoData);
+        setTransactions(transactionsData);
+        setPreferences(preferencesData);
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
+  const handlePersonalInfoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const updatedInfo = {
+      displayName: formData.get('displayName'),
+      email: formData.get('email'),
+      bio: formData.get('bio')
+    };
+
+    try {
+      const response = await fetch('`${process.env.API_URL}/api/profile/update-personal-info`', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedInfo),
+      });
+      const data = await response.json();
+      setPersonalInfo(data);
+    } catch (error) {
+      console.error('Error updating personal info:', error);
+    }
+  };
+
+  const handlePreferencesChange = async (key: keyof Preferences, value: boolean | string) => {
+    try {
+      const response = await fetch('`${process.env.API_URL}/api/profile/update-preferences`', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [key]: value }),
+      });
+      const data = await response.json();
+      setPreferences(data);
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,18 +113,32 @@ export default function UserProfile() {
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <User className="mr-2" /> Personal Information
             </h2>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handlePersonalInfoSubmit}>
               <div>
                 <label className="block text-sm font-medium mb-1">Display Name</label>
-                <input type="text" className="w-full p-2 border rounded" defaultValue="CryptoReader123" />
+                <input 
+                  name="displayName"
+                  type="text" 
+                  className="w-full p-2 border rounded" 
+                  defaultValue={personalInfo?.displayName} 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
-                <input type="email" className="w-full p-2 border rounded" defaultValue="user@example.com" />
+                <input 
+                  name="email"
+                  type="email" 
+                  className="w-full p-2 border rounded" 
+                  defaultValue={personalInfo?.email} 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Bio</label>
-                <textarea className="w-full p-2 border rounded h-24" defaultValue="Blockchain enthusiast and avid reader. Always looking to learn more about Web3 and cryptocurrency." />
+                <textarea 
+                  name="bio"
+                  className="w-full p-2 border rounded h-24" 
+                  defaultValue={personalInfo?.bio} 
+                />
               </div>
               <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                 Save Changes
@@ -85,21 +177,7 @@ export default function UserProfile() {
           </div>
         </div>
         
-        <div>
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <CreditCard className="mr-2" /> Wallet
-            </h2>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-1">Connected Address</p>
-              <p className="font-mono">0x1234...5678</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Balance</p>
-              <p className="font-semibold">2.5 ETH</p>
-            </div>
-          </div>
-          
+        <div>          
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Settings className="mr-2" /> Preferences
@@ -107,19 +185,33 @@ export default function UserProfile() {
             <div className="space-y-4">
               <div>
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    className="mr-2" 
+                    checked={preferences?.emailNotifications}
+                    onChange={(e) => handlePreferencesChange('emailNotifications', e.target.checked)}
+                  />
                   Email notifications
                 </label>
               </div>
               <div>
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    className="mr-2" 
+                    checked={preferences?.showReadingProgress}
+                    onChange={(e) => handlePreferencesChange('showReadingProgress', e.target.checked)}
+                  />
                   Show reading progress
                 </label>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Default Theme</label>
-                <select className="w-full p-2 border rounded">
+                <select 
+                  className="w-full p-2 border rounded"
+                  value={preferences?.theme}
+                  onChange={(e) => handlePreferencesChange('theme', e.target.value)}
+                >
                   <option>Light</option>
                   <option>Dark</option>
                   <option>System</option>

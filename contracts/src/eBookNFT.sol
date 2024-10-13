@@ -34,20 +34,16 @@ contract eBookNFT is ERC721URIStorage, ERC2981, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
-    function mintEBook(string memory title, string memory encryptedContent, string memory tokenURI) public returns (uint256) {
-        unchecked {
-            _currentTokenId++;
-        }
+    function mintEBook(string memory title, string memory coverUrl, uint256 bookId) public returns (uint256) {
+        _safeMint(msg.sender, bookId);
+        _setTokenURI(bookId, coverUrl);
 
-        _safeMint(msg.sender, _currentTokenId);
-        _setTokenURI(_currentTokenId, tokenURI);
+        _eBooks[bookId] = eBook(title, msg.sender, "");
+        _eBookLocked[bookId] = false;
 
-        _eBooks[_currentTokenId] = eBook(title, msg.sender, encryptedContent);
-        _eBookLocked[_currentTokenId] = false;
+        emit eBookMinted(bookId, title, msg.sender);
 
-        emit eBookMinted(_currentTokenId, title, msg.sender);
-
-        return _currentTokenId;
+        return bookId;
     }
 
     function tokenExists(uint256 tokenId) public view returns (bool) {
