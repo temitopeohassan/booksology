@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useAccessControl } from '../../contexts/AccessControlContext';
+import AccessControlWrapper from '../../components/AccessControlWrapper';
 
 interface BookForSale {
   listing_id: number;
@@ -13,6 +15,7 @@ interface BookForSale {
 }
 
 export default function BooksForSale() {
+  const { hasAccess, requestAccess } = useAccessControl();
   const [booksForSale, setBooksForSale] = useState<BookForSale[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +40,7 @@ export default function BooksForSale() {
   }
 
   return (
+    <AccessControlWrapper>
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Books For Sale</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -59,6 +63,7 @@ export default function BooksForSale() {
         ))}
       </div>
     </div>
+    </AccessControlWrapper>
   );
 }
 

@@ -17,7 +17,7 @@ const db = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'booksology',
+  database: process.env.DB_NAME || 'booksology_db',
   port: process.env.DB_PORT || '3306',
 });
 
@@ -79,6 +79,10 @@ app.get('/api/new-releases', async (req, res) => {
 
 app.get('/api/marketplace/books', async (req, res) => {
   const { search, minPrice, maxPrice, sort, category } = req.query;
+
+  // Log the received query parameters
+  console.log('Request received at /api/marketplace/books with parameters:', { search, minPrice, maxPrice, sort, category });
+
   let query = `
     SELECT b.id, b.title, b.author, b.cover, b.price, bfs.id AS listing_id, u.display_name AS seller
     FROM books_for_sale bfs
@@ -91,61 +95,95 @@ app.get('/api/marketplace/books', async (req, res) => {
   if (search) {
     conditions.push('(b.title LIKE ? OR b.author LIKE ?)');
     queryParams.push(`%${search}%`, `%${search}%`);
+    console.log('Search condition applied:', search);
   }
 
   if (minPrice) {
     conditions.push('bfs.price >= ?');
     queryParams.push(Number(minPrice));
+    console.log('Min price condition applied:', minPrice);
   }
 
   if (maxPrice) {
     conditions.push('bfs.price <= ?');
     queryParams.push(Number(maxPrice));
+    console.log('Max price condition applied:', maxPrice);
   }
 
   if (category) {
     query += ' JOIN book_categories bc ON b.id = bc.book_id';
     conditions.push('bc.category_id = ?');
     queryParams.push(Number(category));
+    console.log('Category condition applied:', category);
   }
 
   if (conditions.length > 0) {
     query += ' WHERE ' + conditions.join(' AND ');
+    console.log('Conditions applied to query:', conditions);
   }
 
   if (sort) {
     switch (String(sort)) {
       case 'price_asc':
         query += ' ORDER BY bfs.price ASC';
+        console.log('Sorting by price ascending');
         break;
       case 'price_desc':
         query += ' ORDER BY bfs.price DESC';
+        console.log('Sorting by price descending');
         break;
       default:
         query += ' ORDER BY bfs.listed_at DESC';
+        console.log('Sorting by listed date descending');
     }
   } else {
     query += ' ORDER BY bfs.listed_at DESC';
+    console.log('Default sorting by listed date descending');
   }
+
+  // Log the final query and parameters
+  console.log('Final query:', query);
+  console.log('Query parameters:', queryParams);
 
   try {
     const [rows] = await db.query(query, queryParams);
+    
+    // Log the result of the query
+    console.log('Query result:', rows);
+    
     res.json(rows);
   } catch (err) {
+    // Log the error
     console.error('Error fetching marketplace books:', err);
+    
     res.status(500).json({ error: 'Failed to fetch marketplace books' });
   }
 });
 
+
 app.get('/api/marketplace/categories', async (req, res) => {
   try {
+    // Log when the endpoint is being called
+    console.log('Request received at /api/marketplace/categories');
+
+    // Log the query execution
     const [rows] = await db.query('SELECT id, name FROM categories');
+    console.log('Query executed: SELECT id, name FROM categories');
+    
+    // Log the returned data
+    console.log('Query result:', rows);
+
+    // Send response with the result
     res.json(rows);
   } catch (err) {
+    // Log the error if it occurs
     console.error('Error fetching marketplace categories:', err);
+
+    // Send error response
     res.status(500).json({ error: 'Failed to fetch marketplace categories' });
   }
 });
+
 
 app.get('/api/library/owned-books', async (req, res) => {
   const userId = 1; // Replace with actual user authentication

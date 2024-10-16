@@ -1,11 +1,9 @@
 "use client"
 import { User, Settings, History, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  Address,
-  EthBalance,
-} from '@coinbase/onchainkit/identity';
-import { ConnectWallet, Wallet } from '@coinbase/onchainkit/wallet';
+import { useAccessControl } from '../../contexts/AccessControlContext';
+import AccessControlWrapper from '../../components/AccessControlWrapper';
+
 
 interface PersonalInfo {
   displayName: string;
@@ -28,6 +26,7 @@ interface Preferences {
 }
 
 export default function UserProfile() {
+  const { hasAccess, requestAccess } = useAccessControl();
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -37,9 +36,9 @@ export default function UserProfile() {
     const fetchProfileData = async () => {
       try {
         const [personalInfoRes, transactionsRes, preferencesRes] = await Promise.all([
-          fetch('`${process.env.API_URL}/api/profile/personal-info`'),
-          fetch('`${process.env.API_URL}/api/profile/transactions`'),
-          fetch('`${process.env.API_URL}/api/profile/preferences`')
+          fetch('`${process.env.NEXT_PUBLIC_API_URL}profile/personal-info`'),
+          fetch('`${process.env.NEXT_PUBLIC_API_URL}profile/transactions`'),
+          fetch('`${process.env.NEXT_PUBLIC_API_URL}profile/preferences`')
         ]);
 
         const personalInfoData = await personalInfoRes.json();
@@ -69,7 +68,7 @@ export default function UserProfile() {
     };
 
     try {
-      const response = await fetch('`${process.env.API_URL}/api/profile/update-personal-info`', {
+      const response = await fetch('`${process.env.NEXT_PUBLIC_API_URL}/api/profile/update-personal-info`', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +84,7 @@ export default function UserProfile() {
 
   const handlePreferencesChange = async (key: keyof Preferences, value: boolean | string) => {
     try {
-      const response = await fetch('`${process.env.API_URL}/api/profile/update-preferences`', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/update-preferences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,6 +103,7 @@ export default function UserProfile() {
   }
 
   return (
+    <AccessControlWrapper>
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
       
@@ -222,5 +222,6 @@ export default function UserProfile() {
         </div>
       </div>
     </div>
+    </AccessControlWrapper>
   );
 }

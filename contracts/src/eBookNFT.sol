@@ -1,88 +1,91 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
-contract eBookNFT is ERC721URIStorage, ERC2981, Ownable {
-    uint256 private _currentTokenId;
-
+contract eBookNFT is ERC1155, Ownable, ERC2981 {
     struct eBook {
         string title;
         address author;
         string encryptedContent;
+        uint256 supply;
+        uint256 price;
     }
 
     mapping(uint256 => eBook) private _eBooks;
-    mapping(uint256 => bool) private _eBookLocked;
+    mapping(address => mapping(uint256 => bool)) private _userHasAccess;
 
-    event eBookMinted(uint256 indexed tokenId, string title, address author);
-    event eBookTransferred(uint256 indexed tokenId, address from, address to);
-    event eBookSold(uint256 indexed tokenId, address seller, address buyer, uint256 price);
+    event eBookMinted(uint256 indexed tokenId, string title, address author, uint256 supply, uint256 price);
+    event eBookPurchased(uint256 indexed tokenId, address buyer);
 
-    constructor() ERC721("eBookNFT", "ENFT") Ownable(msg.sender) {
+    constructor() ERC1155("") Ownable(msg.sender) {
         _setDefaultRoyalty(msg.sender, 250); // 2.5% default royalty
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721URIStorage, ERC2981)
+        override(ERC1155, ERC2981)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
     }
 
-    function mintEBook(string memory title, string memory coverUrl, uint256 bookId) public returns (uint256) {
-        _safeMint(msg.sender, bookId);
-        _setTokenURI(bookId, coverUrl);
+    function mintEBook(
+        string memory title,
+        string memory uri,
+        uint256 supply,
+        uint256 price,
+        uint256 tokenId
+    ) public onlyOwner {
+        _mint(msg.sender, tokenId, supply, "");
+        _setURI(uri);
 
-        _eBooks[bookId] = eBook(title, msg.sender, "");
-        _eBookLocked[bookId] = false;
+        _eBooks[tokenId] = eBook(title, msg.sender, "", supply, price);
 
-        emit eBookMinted(bookId, title, msg.sender);
-
-        return bookId;
+        emit eBookMinted(tokenId, title, msg.sender, supply, price);
     }
 
-    function tokenExists(uint256 tokenId) public view returns (bool) {
-        try this.ownerOf(tokenId) returns (address) {
-            return true;
-        } catch {
-            return false;
-        }
+    function buyEBook(uint256 tokenId) public payable {
+        eBook storage book = _eBooks[tokenId];
+        require(msg.value >= book.price, "Insufficient payment");
+        require(balanceOf(address(this), tokenId) > 0, "No more copies available");
+
+        _safeTransferFrom(address(this), msg.sender, tokenId, 1, "");
+        _userHasAccess[msg.sender][tokenId] = true;
+
+        // Handle royalties
+        (address royaltyReceiver, uint256 royaltyAmount) = royaltyInfo(tokenId, msg.value);
+        payable(royaltyReceiver).transfer(royaltyAmount);
+
+        // Transfer remaining amount to the contract owner
+        payable(owner()).transfer(msg.value - royaltyAmount);
+
+        emit eBookPurchased(tokenId, msg.sender);
     }
 
-    function getEBookMetadata(uint256 tokenId) public view returns (string memory, address) {
-        require(tokenExists(tokenId), "eBook does not exist");
+    function getEBookMetadata(uint256 tokenId) public view returns (string memory, address, uint256, uint256) {
         eBook memory book = _eBooks[tokenId];
-        return (book.title, book.author);
+        return (book.title, book.author, book.supply, book.price);
     }
 
     function getEncryptedContent(uint256 tokenId) public view returns (string memory) {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner of this eBook");
-        require(!_eBookLocked[tokenId], "eBook is locked");
+        require(_userHasAccess[msg.sender][tokenId], "You don't have access to this eBook");
         return _eBooks[tokenId].encryptedContent;
     }
 
-    function lockEBook(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner of this eBook");
-        _eBookLocked[tokenId] = true;
+    function setEncryptedContent(uint256 tokenId, string memory content) public onlyOwner {
+        _eBooks[tokenId].encryptedContent = content;
     }
 
-    function unlockEBook(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner of this eBook");
-        _eBookLocked[tokenId] = false;
-    }
-
-    function setRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner of this eBook");
+    function setRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) public onlyOwner {
         _setTokenRoyalty(tokenId, receiver, feeNumerator);
     }
 
-    function recordSale(uint256 tokenId, address seller, address buyer, uint256 price) public onlyOwner {
-        require(tokenExists(tokenId), "eBook does not exist");
-        emit eBookSold(tokenId, seller, buyer, price);
+    function withdraw() public onlyOwner {
+        uint256 balance = address(this).balance;
+        payable(owner()).transfer(balance);
     }
 }

@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAccessControl } from '../contexts/AccessControlContext';
 import { hasIdentityNFT } from '../utils/nftUtils';
-import { useRouter } from 'next/router';
-import { ConnectWallet } from '@coinbase/onchainkit/wallet';
+import { useRouter } from 'next/navigation';
+import ConnectWalletCard from './ConnectWalletCard';
 import { useAccount } from 'wagmi';
 
 interface AccessControlWrapperProps {
-  eBookId: number;
+  eBookId?: number;
   children: React.ReactNode;
 }
 
@@ -27,8 +27,12 @@ const AccessControlWrapper: React.FC<AccessControlWrapperProps> = ({ eBookId, ch
             router.push('/mint');
             return;
           }
-          const access = await hasAccess(eBookId);
-          setCanAccess(access);
+          if (eBookId) {
+            const access = await hasAccess(eBookId);
+            setCanAccess(access);
+          } else {
+            setCanAccess(true);
+          }
         } catch (error) {
           console.error('Error checking access:', error);
         }
@@ -40,25 +44,27 @@ const AccessControlWrapper: React.FC<AccessControlWrapperProps> = ({ eBookId, ch
   }, [eBookId, hasAccess, address, isConnected, router]);
 
   const handleRequestAccess = async () => {
-    try {
-      const granted = await requestAccess(eBookId);
-      if (granted) {
-        setCanAccess(true);
+    if (eBookId) {
+      try {
+        const granted = await requestAccess(eBookId);
+        if (granted) {
+          setCanAccess(true);
+        }
+      } catch (error) {
+        console.error('Error requesting access:', error);
       }
-    } catch (error) {
-      console.error('Error requesting access:', error);
     }
   };
 
   if (!isConnected) {
-    return <ConnectWallet />;
+    return <ConnectWalletCard />;
   }
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!canAccess) {
+  if (!canAccess && eBookId) {
     return (
       <div>
         <p>You don't have access to this content.</p>

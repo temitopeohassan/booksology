@@ -2,6 +2,8 @@
 import { BookOpen, Clock, BookMarked } from 'lucide-react';
 import Link from "next/link"
 import { useEffect, useState } from 'react';
+import { useAccessControl } from '../../contexts/AccessControlContext';
+import AccessControlWrapper from '../../components/AccessControlWrapper';
 
 interface OwnedBook {
   title: string;
@@ -43,6 +45,7 @@ const BookCard = ({ title, author, cover, progress }: OwnedBook) => (
 );
 
 export default function UserLibrary() {
+  const { hasAccess, requestAccess } = useAccessControl();
   const [ownedBooks, setOwnedBooks] = useState<OwnedBook[]>([]);
   const [recentlyRead, setRecentlyRead] = useState<RecentlyReadBook[]>([]);
   const [readingStats, setReadingStats] = useState<ReadingStats | null>(null);
@@ -52,9 +55,9 @@ export default function UserLibrary() {
     const fetchLibraryData = async () => {
       try {
         const [ownedBooksRes, recentlyReadRes, readingStatsRes] = await Promise.all([
-          fetch('`${process.env.API_URL}/api/library/owned-books`'),
-          fetch('`${process.env.API_URL}/api/library/recently-read`'),
-          fetch('`${process.env.API_URL}/api/library/reading-stats`')
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/library/owned-books`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/library/recently-read`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/library/reading-stats`)
         ]);
 
         const ownedBooksData = await ownedBooksRes.json();
@@ -79,6 +82,7 @@ export default function UserLibrary() {
   }
 
   return (
+    <AccessControlWrapper>
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">My Library</h1>
       
@@ -135,5 +139,6 @@ export default function UserLibrary() {
         </div>
       </div>
     </div>
+    </AccessControlWrapper>
   );
 }

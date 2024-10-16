@@ -35,14 +35,17 @@ export default function Header() {
       {/* Logo and Title */}
       <div className="flex items-center">
         <div className="flex items-center mr-8">
+        <Link href="/home" legacyBehavior passHref>
           <Image
             src="/logo.png"
             alt="Booksology Logo"
             width={40}
             height={40}
             className="mr-3"
-          />
+          /></Link>
+          <Link href="/home" legacyBehavior passHref>
           <h1 className="text-3xl font-bold">Booksology</h1>
+          </Link>
         </div>
         
         {/* Navigation for larger screens */}
@@ -76,7 +79,6 @@ export default function Header() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-          </NavigationMenuList>
             <NavigationMenuItem>
               <Link href="/booksforsale" legacyBehavior passHref>
                 <NavigationMenuLink className="hover:font-bold transition-all">
@@ -84,6 +86,7 @@ export default function Header() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
+          </NavigationMenuList>   
         </NavigationMenu>
 
         {/* Hamburger Icon for mobile */}

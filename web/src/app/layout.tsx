@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from 'react';
 import RootLayout from './RootLayout';
+import { AccessControlProvider } from '../contexts/AccessControlContext';
 
 export const metadata: Metadata = {
   title: "Booksology | The Bookstore for the Modern Age",
@@ -16,7 +17,11 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
       <body>
-        <RootLayout>{children}</RootLayout>
+        <RootLayout>
+          <AccessControlProvider>
+            {children}
+          </AccessControlProvider>
+        </RootLayout>
       </body>
     </html>
   );

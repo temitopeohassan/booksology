@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract IdentityNFT is ERC721URIStorage, Ownable {
+contract BookshopPassNFT is ERC721URIStorage, Ownable {
     uint256 private _currentTokenId;
 
     mapping(address => bool) private _hasMinted;
@@ -14,7 +14,7 @@ contract IdentityNFT is ERC721URIStorage, Ownable {
 
     event BookshopPassMinted(address indexed user, uint256 tokenId);
 
-    constructor() ERC721("IdentityNFT", "IDNFT") Ownable(msg.sender) {}
+    constructor() ERC721("Bookshop Pass", "BPS") Ownable(msg.sender) {}
 
     function mintBookshopPass() public {
         require(!_hasMinted[msg.sender], "User has already minted a Bookshop Pass");
