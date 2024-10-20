@@ -2,48 +2,40 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BookshopPassNFT is ERC721URIStorage, Ownable {
+contract BookshopPassNFT is ERC721, Ownable {
     uint256 private _currentTokenId;
-
-    mapping(address => bool) private _hasMinted;
-
-    string private constant TOKEN_URI = "ipfs://QmYybP5fCGSC7Ywv9ivm5NF9ZWGWTYfsaUJHvTYQToLBgW";
+    string private _tokenURI;
 
     event BookshopPassMinted(address indexed user, uint256 tokenId);
 
-    constructor() ERC721("Bookshop Pass", "BPS") Ownable(msg.sender) {}
+    constructor(string memory initialTokenURI) ERC721("Bookshop Pass", "BPS") Ownable(msg.sender) {
+        _tokenURI = initialTokenURI;
+    }
 
     function mintBookshopPass() public {
-        require(!_hasMinted[msg.sender], "User has already minted a Bookshop Pass");
-
+        require(balanceOf(msg.sender) == 0, "User already has a Bookshop Pass");
         _currentTokenId++;
         uint256 newTokenId = _currentTokenId;
-
         _safeMint(msg.sender, newTokenId);
-        _setTokenURI(newTokenId, TOKEN_URI);
-        _hasMinted[msg.sender] = true;
-
         emit BookshopPassMinted(msg.sender, newTokenId);
     }
 
-    function hasMinted(address user) public view returns (bool) {
-        return _hasMinted[user];
+    function tokenURI(uint256) public view override returns (string memory) {
+        return _tokenURI;
     }
 
-    function burn(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Only the owner can burn the Bookshop Pass");
-        _hasMinted[msg.sender] = false;
-        _burn(tokenId);
+    function setTokenURI(string memory newTokenURI) public onlyOwner {
+        _tokenURI = newTokenURI;
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
+    function totalSupply() public view returns (uint256) {
+        return _currentTokenId;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721URIStorage) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
+    // The balanceOf function is already inherited from ERC721
+    // function balanceOf(address owner) public view virtual override returns (uint256) {
+    //     return super.balanceOf(owner);
+    // }
 }

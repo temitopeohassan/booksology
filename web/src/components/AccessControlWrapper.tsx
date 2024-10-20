@@ -1,78 +1,49 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { useAccessControl } from '../contexts/AccessControlContext';
-import { hasIdentityNFT } from '../utils/nftUtils';
-import { useRouter } from 'next/navigation';
-import ConnectWalletCard from './ConnectWalletCard';
 import { useAccount } from 'wagmi';
+import { useRouter } from 'next/navigation';
+import { hasBookshopPassNFT } from '../utils/nftUtils';
+import ConnectWalletCard from './ConnectWalletCard';
 
 interface AccessControlWrapperProps {
-  eBookId?: number;
   children: React.ReactNode;
 }
 
-const AccessControlWrapper: React.FC<AccessControlWrapperProps> = ({ eBookId, children }) => {
-  const { hasAccess, requestAccess } = useAccessControl();
-  const [canAccess, setCanAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+const AccessControlWrapper: React.FC<AccessControlWrapperProps> = ({ children }) => {
+  const [hasAccess, setHasAccess] = useState(false);
   const { address, isConnected } = useAccount();
+  const router = useRouter();
 
   useEffect(() => {
-    const checkAccessAndNFT = async () => {
+    const checkAccess = async () => {
       if (isConnected && address) {
-        try {
-          const hasNFT = await hasIdentityNFT(address);
-          if (!hasNFT) {
-            router.push('/mint');
-            return;
-          }
-          if (eBookId) {
-            const access = await hasAccess(eBookId);
-            setCanAccess(access);
-          } else {
-            setCanAccess(true);
-          }
-        } catch (error) {
-          console.error('Error checking access:', error);
+        console.log('AccessControlWrapper: Checking for Bookshop Pass NFT...');
+        const hasNFT = await hasBookshopPassNFT(address);
+        console.log('AccessControlWrapper: Has Bookshop Pass NFT:', hasNFT);
+        setHasAccess(hasNFT);
+        if (!hasNFT) {
+          console.log('AccessControlWrapper: Redirecting to mint page...');
+          router.push('/mint');
         }
+      } else {
+        setHasAccess(false);
       }
-      setLoading(false);
     };
 
-    checkAccessAndNFT();
-  }, [eBookId, hasAccess, address, isConnected, router]);
-
-  const handleRequestAccess = async () => {
-    if (eBookId) {
-      try {
-        const granted = await requestAccess(eBookId);
-        if (granted) {
-          setCanAccess(true);
-        }
-      } catch (error) {
-        console.error('Error requesting access:', error);
-      }
-    }
-  };
+    checkAccess();
+  }, [isConnected, address, router]);
 
   if (!isConnected) {
+    console.log('AccessControlWrapper: Wallet not connected');
     return <ConnectWalletCard />;
   }
 
-  if (loading) {
-    return <div>Loading...</div>;
+  if (!hasAccess) {
+    console.log('AccessControlWrapper: No access, rendering null');
+    return null; // This will prevent the content from flashing before redirect
   }
 
-  if (!canAccess && eBookId) {
-    return (
-      <div>
-        <p>You don't have access to this content.</p>
-        <button onClick={handleRequestAccess}>Request Access</button>
-      </div>
-    );
-  }
-
+  console.log('AccessControlWrapper: Rendering children');
   return <>{children}</>;
 };
 

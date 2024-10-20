@@ -1,71 +1,35 @@
-"use client"
+"use client";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from 'react';
-
-interface Category {
-  id: string;
-  name: string;
-}
 
 interface Book {
   id: string;
   title: string;
   author: string;
-}
-
-interface BookProps {
-  title: string;
-  author: string;
-  price: number;
   cover: string;
+  price: number;
 }
 
 export default function Bookstore() {
-  const [categories, setCategories] = useState<Category[]>([]);
-const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [sort, setSort] = useState('latest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 8;
 
-  // Fetch categories from the API
-  const fetchCategories = async () => {
-    console.log('Fetching categories...');
-    try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}marketplace/categories`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      console.log('Categories fetched:', data);
-      setCategories(data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  // Fetch books from the API
+  // Fetch books from the /books API
   const fetchBooks = async () => {
-    console.log('Fetching books...');
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams({
-        ...(searchTerm && { search: searchTerm }),
-        ...(minPrice && { minPrice }),
-        ...(maxPrice && { maxPrice }),
-        ...(sort !== 'latest' && { sort })
-      });
-
-      const url = `${process.env.NEXT_PUBLIC_API_URL}marketplace/books?${queryParams}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/books`;
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      console.log('Books fetched:', data);
       setBooks(data);
+      setTotalPages(Math.ceil(data.length / itemsPerPage));
     } catch (error) {
       console.error('Error fetching books:', error);
     } finally {
@@ -73,73 +37,27 @@ const [books, setBooks] = useState<Book[]>([]);
     }
   };
 
-  // Fetch categories and books on mount
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
+  // Fetch books on mount
   useEffect(() => {
     fetchBooks();
-  }, [searchTerm, minPrice, maxPrice, sort]);
+  }, []);
 
-  // Handle toggling categories
-  const handleCategoryToggle = (category: string) => {
-    const newCategories = new Set(selectedCategories);
-    if (newCategories.has(category)) {
-      newCategories.delete(category);
-    } else {
-      newCategories.add(category);
-    }
-    setSelectedCategories(newCategories);
+  // Pagination handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
+
+  // Get the current books to display
+  const paginatedBooks = books.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Marketplace</h1>
 
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="md:w-1/4">
-          <div className="border rounded-lg p-4">
-            <h2 className="font-semibold mb-4">Filters</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Price Range</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="number" 
-                    placeholder="Min" 
-                    className="w-1/2 p-2 border rounded"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                  />
-                  <input 
-                    type="number" 
-                    placeholder="Max" 
-                    className="w-1/2 p-2 border rounded"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-  {categories.map((category) => (
-    <div key={category.id} className="flex items-center mb-2">
-      <input 
-        type="checkbox" 
-        id={category.name} 
-        className="mr-2"
-        checked={selectedCategories.has(category.name)}
-        onChange={() => handleCategoryToggle(category.name)}
-      />
-      <label htmlFor={category.name}>{category.name}</label> {/* Use the 'name' property */}
-    </div>
-  ))}
-</div>
-
-            </div>
-          </div>
-        </div>
-
         <div className="md:w-3/4">
           <div className="flex justify-between items-center mb-4">
             <div className="relative flex-grow max-w-md">
@@ -152,32 +70,50 @@ const [books, setBooks] = useState<Book[]>([]);
               />
               <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sort by:</span>
-              <select 
-                className="border rounded-lg p-2"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="latest">Latest</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-              </select>
-            </div>
           </div>
 
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
             <div>
-  {books.map((book) => (
-    <div key={book.id} className="book-item">
-      <h3>{book.title}</h3> {/* Use the 'title' property */}
-      <p>by {book.author}</p> {/* Use the 'author' property */}
-    </div>
-  ))}
-</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {paginatedBooks.map((book) => (
+                  <div key={book.id} className="border p-4 rounded-lg">
+                    <img
+  src={book.cover ? `/images/${book.cover}` : '/images/default-cover.jpg'}
+  alt={book.title}
+  className="w-full h-48 object-cover rounded"
+/>
 
+                    <h3 className="mt-4 text-lg font-semibold">{book.title}</h3>
+                    <p className="text-gray-600">by {book.author}</p>
+                    <p className="text-blue-500 mt-2">{book.price} ETH</p>
+                    <Link href={`/bookdetails/${book.id}`}>
+                      <button className="mt-4 bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
+                        View Details
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <button
+                      key={index + 1}
+                      className={`mx-1 px-3 py-1 border ${
+                        index + 1 === currentPage ? 'bg-blue-500 text-white' : 'bg-white'
+                      }`}
+                      onClick={() => handlePageChange(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

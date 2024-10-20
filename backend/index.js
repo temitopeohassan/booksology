@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
 // Create a MySQL connection pool
@@ -34,17 +34,71 @@ app.use(async (req, res, next) => {
 
 // Endpoints
 app.get('/api', (req, res) => {
+  console.log('GET /api - Welcome endpoint hit');
   res.send('Welcome to the Booksology API');
 });
 
+app.get('/api/books', async (req, res) => {
+  console.log('GET /api/books - Fetching all books');
+
+  const query = `
+    SELECT 
+      id, title, author, cover, price, description, 
+      preview, created_at, encrypted_content, 
+      featured_books, tokenID, categories_id
+    FROM books
+  `;
+
+  try {
+    // Execute the query to fetch all books
+    const [rows] = await db.query(query);
+    console.log('Books fetched:', rows);
+    res.json(rows);  // Send the results as JSON
+  } catch (err) {
+    console.error('Error fetching books:', err);
+    res.status(500).json({ error: 'Failed to fetch books' });
+  }
+});
+
+app.get('/api/books/:id', async (req, res) => {
+  const bookId = req.params.id;
+  console.log(`GET /api/books/${bookId} - Fetching book by ID`);
+
+  const query = `
+    SELECT 
+      id, title, author, cover, price, description, 
+      preview, created_at, encrypted_content, 
+      featured_books, tokenID, categories_id
+    FROM books
+    WHERE id = ?
+  `;
+
+  try {
+    const [rows] = await db.query(query, [bookId]);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error(`Error fetching book by ID ${bookId}:`, error); // More detailed error log
+    res.status(500).json({ error: 'Failed to fetch the book', details: error.message }); // Include error details
+  }
+});
+
+
+
 app.get('/api/featured-books', async (req, res) => {
+  console.log('GET /api/featured-books - Fetching featured books');
   try {
     const [rows] = await db.query(`
-      SELECT b.id, b.title, b.author, b.cover
-      FROM featured_books fb
-      JOIN books b ON fb.book_id = b.id
-      WHERE fb.feature_end_date IS NULL OR fb.feature_end_date > NOW()
+      SELECT id, title, author, cover
+      FROM books
+      WHERE featured_books = true
+      ORDER BY created_at DESC
     `);
+    console.log('Featured books fetched:', rows);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching featured books:', err);
@@ -53,8 +107,10 @@ app.get('/api/featured-books', async (req, res) => {
 });
 
 app.get('/api/categories', async (req, res) => {
+  console.log('GET /api/categories - Fetching categories');
   try {
     const [rows] = await db.query('SELECT id, name, icon FROM categories');
+    console.log('Categories fetched:', rows);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching categories:', err);
@@ -63,13 +119,15 @@ app.get('/api/categories', async (req, res) => {
 });
 
 app.get('/api/new-releases', async (req, res) => {
+  console.log('GET /api/new-releases - Fetching new releases');
   try {
     const [rows] = await db.query(`
-      SELECT b.id, b.title, b.author, b.cover
-      FROM books b
-      ORDER BY b.created_at DESC
-      LIMIT 10
+      SELECT id, title, author, cover
+      FROM books
+      ORDER BY created_at DESC
+      LIMIT 4
     `);
+    console.log('New releases fetched:', rows);
     res.json(rows);
   } catch (err) {
     console.error('Error fetching new releases:', err);
@@ -78,123 +136,85 @@ app.get('/api/new-releases', async (req, res) => {
 });
 
 app.get('/api/marketplace/books', async (req, res) => {
+  console.log('GET /api/marketplace/books - Fetching marketplace books');
   const { search, minPrice, maxPrice, sort, category } = req.query;
 
-  // Log the received query parameters
-  console.log('Request received at /api/marketplace/books with parameters:', { search, minPrice, maxPrice, sort, category });
-
   let query = `
-    SELECT b.id, b.title, b.author, b.cover, b.price, bfs.id AS listing_id, u.display_name AS seller
-    FROM books_for_sale bfs
-    JOIN books b ON bfs.book_id = b.id
-    JOIN users u ON bfs.seller_id = u.id
+    SELECT b.id, b.title, b.author, b.cover, b.price, c.name AS category
+    FROM books b
+    LEFT JOIN categories c ON b.categories_id = c.id
   `;
+  
   const queryParams = [];
   const conditions = [];
 
+  // Apply search filter (search by title or author)
   if (search) {
     conditions.push('(b.title LIKE ? OR b.author LIKE ?)');
     queryParams.push(`%${search}%`, `%${search}%`);
-    console.log('Search condition applied:', search);
   }
 
+  // Apply minPrice filter
   if (minPrice) {
-    conditions.push('bfs.price >= ?');
+    conditions.push('b.price >= ?');
     queryParams.push(Number(minPrice));
-    console.log('Min price condition applied:', minPrice);
   }
 
+  // Apply maxPrice filter
   if (maxPrice) {
-    conditions.push('bfs.price <= ?');
+    conditions.push('b.price <= ?');
     queryParams.push(Number(maxPrice));
-    console.log('Max price condition applied:', maxPrice);
   }
 
+  // Apply category filter
   if (category) {
-    query += ' JOIN book_categories bc ON b.id = bc.book_id';
-    conditions.push('bc.category_id = ?');
+    conditions.push('b.categories_id = ?');
     queryParams.push(Number(category));
-    console.log('Category condition applied:', category);
   }
 
+  // Append conditions to the query
   if (conditions.length > 0) {
     query += ' WHERE ' + conditions.join(' AND ');
-    console.log('Conditions applied to query:', conditions);
   }
 
+  // Apply sorting
   if (sort) {
     switch (String(sort)) {
       case 'price_asc':
-        query += ' ORDER BY bfs.price ASC';
-        console.log('Sorting by price ascending');
+        query += ' ORDER BY b.price ASC';
         break;
       case 'price_desc':
-        query += ' ORDER BY bfs.price DESC';
-        console.log('Sorting by price descending');
+        query += ' ORDER BY b.price DESC';
         break;
       default:
-        query += ' ORDER BY bfs.listed_at DESC';
-        console.log('Sorting by listed date descending');
+        query += ' ORDER BY b.created_at DESC';
     }
   } else {
-    query += ' ORDER BY bfs.listed_at DESC';
-    console.log('Default sorting by listed date descending');
+    query += ' ORDER BY b.created_at DESC';  // Default sort by creation date
   }
 
-  // Log the final query and parameters
-  console.log('Final query:', query);
-  console.log('Query parameters:', queryParams);
-
   try {
+    // Execute the query with the parameters
     const [rows] = await db.query(query, queryParams);
-    
-    // Log the result of the query
-    console.log('Query result:', rows);
-    
-    res.json(rows);
+    res.json(rows);  // Return the results as JSON
   } catch (err) {
-    // Log the error
     console.error('Error fetching marketplace books:', err);
-    
     res.status(500).json({ error: 'Failed to fetch marketplace books' });
   }
 });
 
-
-app.get('/api/marketplace/categories', async (req, res) => {
-  try {
-    // Log when the endpoint is being called
-    console.log('Request received at /api/marketplace/categories');
-
-    // Log the query execution
-    const [rows] = await db.query('SELECT id, name FROM categories');
-    console.log('Query executed: SELECT id, name FROM categories');
-    
-    // Log the returned data
-    console.log('Query result:', rows);
-
-    // Send response with the result
-    res.json(rows);
-  } catch (err) {
-    // Log the error if it occurs
-    console.error('Error fetching marketplace categories:', err);
-
-    // Send error response
-    res.status(500).json({ error: 'Failed to fetch marketplace categories' });
-  }
-});
-
-
 app.get('/api/library/owned-books', async (req, res) => {
+  console.log('GET /api/library/owned-books - Fetching owned books');
   const userId = 1; // Replace with actual user authentication
+
   try {
     const [rows] = await db.query(`
-      SELECT b.id, b.title, b.author, b.cover, ub.progress, bn.token_id
+      SELECT b.id, b.title, b.author, b.cover, ub.progress, ub.book_for_sale
       FROM user_books ub
       JOIN books b ON ub.book_id = b.id
-      JOIN book_nfts bn ON b.id = bn.book_id
       WHERE ub.user_id = ?
     `, [userId]);
+    
     res.json(rows);
   } catch (err) {
     console.error('Error fetching owned books:', err);
@@ -202,43 +222,9 @@ app.get('/api/library/owned-books', async (req, res) => {
   }
 });
 
-app.get('/api/library/recently-read', async (req, res) => {
-  const userId = 1; // Replace with actual user authentication
-  try {
-    const [rows] = await db.query(`
-      SELECT b.id, b.title, rs.start_time, rs.end_time
-      FROM reading_sessions rs
-      JOIN books b ON rs.book_id = b.id
-      WHERE rs.user_id = ?
-      ORDER BY rs.end_time DESC
-      LIMIT 5
-    `, [userId]);
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching recently read books:', err);
-    res.status(500).json({ error: 'Failed to fetch recently read books' });
-  }
-});
-
-app.get('/api/library/reading-stats', async (req, res) => {
-  const userId = 1; // Replace with actual user authentication
-  try {
-    const [rows] = await db.query(`
-      SELECT 
-        COUNT(DISTINCT book_id) AS books_read,
-        SUM(TIMESTAMPDIFF(MINUTE, start_time, end_time)) AS total_reading_time,
-        AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) AS avg_daily_reading
-      FROM reading_sessions
-      WHERE user_id = ?
-    `, [userId]);
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('Error fetching reading stats:', err);
-    res.status(500).json({ error: 'Failed to fetch reading stats' });
-  }
-});
 
 app.get('/api/profile/personal-info', async (req, res) => {
+  console.log('GET /api/profile/personal-info - Fetching personal info');
   const userId = 1; // Replace with actual user authentication
   try {
     const [rows] = await db.query('SELECT id, display_name, email, bio FROM users WHERE id = ?', [userId]);
@@ -250,6 +236,7 @@ app.get('/api/profile/personal-info', async (req, res) => {
 });
 
 app.get('/api/profile/transactions', async (req, res) => {
+  console.log('GET /api/profile/transactions - Fetching transactions');
   const userId = 1; // Replace with actual user authentication
   try {
     const [rows] = await db.query('SELECT * FROM transactions WHERE user_id = ?', [userId]);
@@ -261,6 +248,7 @@ app.get('/api/profile/transactions', async (req, res) => {
 });
 
 app.get('/api/profile/wallet', async (req, res) => {
+  console.log('GET /api/profile/wallet - Fetching wallet info');
   const userId = 1; // Replace with actual user authentication
   try {
     const [rows] = await db.query('SELECT id, address, balance FROM wallets WHERE user_id = ?', [userId]);
@@ -272,6 +260,7 @@ app.get('/api/profile/wallet', async (req, res) => {
 });
 
 app.get('/api/profile/preferences', async (req, res) => {
+  console.log('GET /api/profile/preferences - Fetching preferences');
   const userId = 1; // Replace with actual user authentication
   try {
     const [rows] = await db.query('SELECT * FROM user_preferences WHERE user_id = ?', [userId]);
@@ -283,6 +272,7 @@ app.get('/api/profile/preferences', async (req, res) => {
 });
 
 app.post('/api/profile/update-personal-info', async (req, res) => {
+  console.log('POST /api/profile/update-personal-info - Updating personal info');
   const userId = 1; // Replace with actual user authentication
   const { displayName, email, bio } = req.body;
   try {
@@ -294,16 +284,18 @@ app.post('/api/profile/update-personal-info', async (req, res) => {
   }
 });
 
-app.get('/api/reader/:bookId', async (req, res) => {
-  const { bookId } = req.params;
+app.get('/api/reader/:title', async (req, res) => {
+  const { title } = req.params;
+  console.log(`GET /api/reader/${title} - Fetching book content`);
+
   try {
     const [book] = await db.query(`
       SELECT b.title, b.author, cc.content
       FROM books b
       JOIN chapters c ON b.id = c.book_id
       JOIN chapter_content cc ON c.id = cc.chapter_id
-      WHERE b.id = ? AND c.chapter_number = 1
-    `, [bookId]);
+      WHERE b.title = ? AND c.chapter_number = 1
+    `, [title]);
 
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });

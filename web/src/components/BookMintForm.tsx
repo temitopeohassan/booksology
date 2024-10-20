@@ -4,7 +4,7 @@ import { EBOOKNFT_CONTRACT_ADDRESS, EBOOKNFT_CONTRACT_ABI } from '../app/constan
 
 export default function BookMintForm() {
   const [title, setTitle] = useState('');
-  const [uri, setUri] = useState('');
+  const [metadataUrl, setMetadataUrl] = useState('');
   const [supply, setSupply] = useState('');
   const [price, setPrice] = useState('');
   const [tokenId, setTokenId] = useState('');
@@ -20,7 +20,7 @@ export default function BookMintForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form submitted', { title, uri, supply, price, tokenId });
+    console.log('Form submitted', { title, metadataUrl, supply, price, tokenId });
     setStatus('Initiating transaction...');
 
     try {
@@ -28,7 +28,7 @@ export default function BookMintForm() {
         address: EBOOKNFT_CONTRACT_ADDRESS,
         abi: EBOOKNFT_CONTRACT_ABI,
         functionName: 'mintEBook',
-        args: [title, uri, BigInt(supply), BigInt(price), BigInt(tokenId)],
+        args: [title, metadataUrl, BigInt(supply), BigInt(price), BigInt(tokenId)],
       });
       console.log('Transaction initiated:', result);
       setStatus('Transaction sent. Waiting for confirmation...');
@@ -63,14 +63,14 @@ export default function BookMintForm() {
         />
       </div>
       <div>
-        <label htmlFor="uri" className="block mb-2">Metadata URI</label>
+        <label htmlFor="metadataUrl" className="block mb-2">Metadata URL</label>
         <input
-          type="text"
-          id="uri"
-          value={uri}
-          onChange={(e) => setUri(e.target.value)}
+          type="url"
+          id="metadataUrl"
+          value={metadataUrl}
+          onChange={(e) => setMetadataUrl(e.target.value)}
           className="w-full p-2 border rounded"
-          placeholder="ipfs://..."
+          placeholder="https://example.com/metadata.json"
           required
         />
       </div>

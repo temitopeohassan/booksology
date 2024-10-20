@@ -1,0 +1,15 @@
+{
+  "name": "Bookshop Pass",
+  "description": "A pass granting special access and benefits to our bookshop.",
+  "image": "https://booksology.vercel.app/home/images/bookshop-pass.png",
+  "attributes": [
+    {
+      "trait_type": "Pass Type",
+      "value": "Standard"
+    },
+    {
+      "trait_type": "Valid Until",
+      "value": "Unlimited"
+    }
+  ]
+}

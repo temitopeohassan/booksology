@@ -4,7 +4,7 @@ import { coinbaseWallet } from 'wagmi/connectors';
 
 export const wagmiConfig = createConfig({
   chains: [baseSepolia],
-  multiInjectedProviderDiscovery: false,
+  multiInjectedProviderDiscovery: true,
   connectors: [
     coinbaseWallet({
       appName: 'Booksology',

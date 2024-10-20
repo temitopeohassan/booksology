@@ -1,0 +1,20 @@
+{
+  "name": "The Blockchain Revolution",
+  "description": "An in-depth exploration of blockchain technology and its potential to reshape industries.",
+  "image": "https://example.com/images/blockchain-revolution-cover.png",
+  "properties": {
+    "author": "Satoshi Nakamoto",
+    "publisher": "Decentralized Press",
+    "publishDate": "2024-03-15",
+    "language": "English",
+    "pageCount": 256,
+    "isbn": "978-1234567890",
+    "genre": ["Technology", "Finance", "Computer Science"],
+    "keywords": ["blockchain", "cryptocurrency", "decentralization", "smart contracts"],
+    "contentType": "image/png",
+    "contentSize": "5000000",
+    "contentUrl": "https://puredelightfoods.com/images/blockchain-revolution.png",
+    "previewUrl": "https://puredelightfoods.com/blockchain-revolution.png",
+    "externalUrl": "https://puredelightfoods.com/blockchain-revolution"
+  }
+}

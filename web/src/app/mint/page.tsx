@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount, useChainId } from 'wagmi';
 import { BOOKSHOPPASSNFT_CONTRACT_ABI, BOOKSHOPPASSNFT_CONTRACT_ADDRESS } from '../constants';
 import { ConnectWallet } from '@coinbase/onchainkit/wallet';
+import { useRouter } from 'next/navigation';
 
 export default function MintBookshopPassNFT() {
   const [minting, setMinting] = useState(false);
@@ -16,12 +17,20 @@ export default function MintBookshopPassNFT() {
   });
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const router = useRouter();
 
   console.log('Component rendered. isConnected:', isConnected, 'address:', address, 'chainId:', chainId);
 
   useEffect(() => {
     console.log('Transaction status:', { isPending, isConfirming, isSuccess, hash });
   }, [isPending, isConfirming, isSuccess, hash]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      console.log('Minting successful, redirecting to home page');
+      router.push('/');
+    }
+  }, [isSuccess, router]);
 
   const mintNFT = async () => {
     console.log('Mint NFT function called');
