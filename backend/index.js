@@ -203,9 +203,53 @@ app.get('/api/marketplace/books', async (req, res) => {
   }
 });
 
-app.get('/api/library/owned-books', async (req, res) => {
-  console.log('GET /api/library/owned-books - Fetching owned books');
-  const userId = 1; // Replace with actual user authentication
+app.post('/api/create-user', async (req, res) => {
+  const { wallet } = req.body;
+
+  // Basic validation for wallet presence
+  if (!wallet) {
+    return res.status(400).json({ error: 'Wallet address is required' });
+  }
+
+  try {
+    // Check if the user with this wallet address already exists
+    const [existingUser] = await db.query('SELECT * FROM users WHERE wallet = ?', [wallet]);
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: 'User with this wallet address already exists' });
+    }
+
+    // Insert the new user into the database
+    const result = await db.query(`
+      INSERT INTO users (wallet)
+      VALUES (?)
+    `, [wallet]);
+
+    // Return a success response with the newly created user ID
+    res.status(201).json({ message: 'User created successfully', userId: result.insertId });
+  } catch (err) {
+    console.error('Error creating new user:', err);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const [users] = await db.query(`
+      SELECT id, display_name, wallet, email, bio, created_at
+      FROM users
+    `);
+
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+
+app.get('/api/library/owned-books/:id', async (req, res) => {
+  const userId = req.params.id; // Extract userId from the route parameter
+  console.log(`GET /api/library/owned-books/${userId} - Fetching owned books`);
 
   try {
     const [rows] = await db.query(`
@@ -214,7 +258,11 @@ app.get('/api/library/owned-books', async (req, res) => {
       JOIN books b ON ub.book_id = b.id
       WHERE ub.user_id = ?
     `, [userId]);
-    
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No owned books found for this user' });
+    }
+
     res.json(rows);
   } catch (err) {
     console.error('Error fetching owned books:', err);
@@ -284,33 +332,45 @@ app.post('/api/profile/update-personal-info', async (req, res) => {
   }
 });
 
-app.get('/api/reader/:title', async (req, res) => {
-  const { title } = req.params;
-  console.log(`GET /api/reader/${title} - Fetching book content`);
-
+app.get('/api/reader/:bookId', async (req, res) => {
+  const { bookId } = req.params;
+  console.log(`GET /api/reader/${bookId} - Fetching book content`);
+  
   try {
-    const [book] = await db.query(`
+    const [rows] = await db.query(`
       SELECT b.title, b.author, cc.content
       FROM books b
       JOIN chapters c ON b.id = c.book_id
       JOIN chapter_content cc ON c.id = cc.chapter_id
-      WHERE b.title = ? AND c.chapter_number = 1
-    `, [title]);
+      WHERE b.id = ? AND c.chapter_number = 1
+    `, [bookId]);
 
-    if (!book) {
+    // Log the result to ensure query is fetching data
+    console.log('Query result:', rows);
+
+    if (rows.length === 0) {
+      console.log('Book not found');
       return res.status(404).json({ error: 'Book not found' });
     }
 
-    res.json({
+    const book = rows[0]; // Extract the first book from the result
+
+    const response = {
       title: book.title,
       author: book.author,
       content: book.content
-    });
+    };
+    console.log('Sending response:', response);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.json(response);
   } catch (err) {
     console.error('Error fetching book content:', err);
     res.status(500).json({ error: 'Failed to fetch book content' });
   }
 });
+
+
 
 // Start the server
 app.listen(PORT, () => {

@@ -4,6 +4,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
+import { useAccessControl } from '../../contexts/AccessControlContext';
+import AccessControlWrapper from '../../components/AccessControlWrapper';
+import { hasBookshopPassNFT } from '@/utils/nftUtils';
 
 interface Book {
   id: number;
@@ -143,6 +146,7 @@ export default function Home() {
   console.log('New Releases:', newReleases);
 
   return (
+    <AccessControlWrapper>
     <div className="container mx-auto px-4 py-8">
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Welcome To Booksology</h1>
@@ -175,5 +179,6 @@ export default function Home() {
         </div>
       </section>
     </div>
+    </AccessControlWrapper>
   );
 }

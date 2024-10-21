@@ -37,24 +37,28 @@ export default function BookDetails() {
     hash,
   });
 
-  const bookId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const bookId = parseInt(Array.isArray(params.id) ? params.id[0] : params.id, 10);
 
   const { data: metadata } = useReadContract({
     address: EBOOKNFT_CONTRACT_ADDRESS,
     abi: EBOOKNFT_CONTRACT_ABI,
     functionName: 'getEBookMetadata',
-    args: bookId ? [BigInt(bookId)] : undefined,
+    args: bookId ? [bookId] : undefined,
   });
+
+  const [blockchainData, setBlockchainData] = useState<{
+    supply: number;
+    blockchainPrice: number;
+    remainingSupply: number;
+  } | null>(null);
 
   useEffect(() => {
     if (metadata && Array.isArray(metadata)) {
-      setBook(prevBook => prevBook ? {
-        ...prevBook,
-        title: metadata[0] as string,
-        author: metadata[1] as string,
+      setBlockchainData({
         supply: Number(metadata[2]),
-        price: Number(metadata[3])
-      } : null);
+        blockchainPrice: Number(metadata[3]) / 1e18, // Convert wei to ETH
+        remainingSupply: Number(metadata[2]) // Assuming initial supply is the remaining supply
+      });
     }
   }, [metadata]);
 
@@ -99,25 +103,34 @@ export default function BookDetails() {
     }, [bookId]);
 
     const handlePurchase = async () => {
-      if (!book || !bookId) return;
+      if (!book || isNaN(bookId) || !blockchainData) return;
+
+      if (blockchainData.remainingSupply <= 0) {
+        setStatus('Error: No more copies available for purchase.');
+        return;
+      }
 
       try {
-          setStatus('Initiating purchase...');
+        setStatus('Initiating purchase...');
 
-          const result = await writeContract({
-              address: EBOOKNFT_CONTRACT_ADDRESS,
-              abi: EBOOKNFT_CONTRACT_ABI,
-              functionName: 'buyEBook',
-              args: [BigInt(bookId)],
-              value: parseEther(book.price.toString()),
-          });
+        const result = await writeContract({
+          address: EBOOKNFT_CONTRACT_ADDRESS,
+          abi: EBOOKNFT_CONTRACT_ABI,
+          functionName: 'buyEBook',
+          args: [BigInt(book.tokenID)],
+          value: parseEther(blockchainData.blockchainPrice.toString()),
+        });
 
-          setStatus('Purchase transaction sent. Waiting for confirmation...');
+        setStatus('Purchase transaction sent. Waiting for confirmation...');
       } catch (error) {
-          console.error('Error purchasing book:', error);
+        console.error('Error purchasing book:', error);
+        if (error instanceof Error && error.message.includes('No more copies available')) {
+          setStatus('Error: No more copies available for purchase.');
+        } else {
           setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+        }
       }
-  };
+    };
 
 
     useEffect(() => {
