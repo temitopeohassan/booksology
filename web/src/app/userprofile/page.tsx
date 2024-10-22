@@ -1,5 +1,5 @@
 "use client"
-import { User, Settings, History, CreditCard } from 'lucide-react';
+import { User, Settings, History } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAccessControl } from '../../contexts/AccessControlContext';
 import AccessControlWrapper from '../../components/AccessControlWrapper';
@@ -26,7 +26,6 @@ interface Preferences {
 }
 
 export default function UserProfile() {
-  const { hasAccess, requestAccess } = useAccessControl();
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);

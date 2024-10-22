@@ -10,8 +10,8 @@ export default function BookMintForm() {
   const [tokenId, setTokenId] = useState('');
   const [status, setStatus] = useState('');
 
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { isConnected } = useAccount();
+ 
   const { writeContract, data: hash, error, isPending } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isMinted } = useWaitForTransactionReceipt({
