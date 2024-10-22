@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useAccessControl } from '../../contexts/AccessControlContext';
 import AccessControlWrapper from '../../components/AccessControlWrapper';
 
 interface BookForSale {

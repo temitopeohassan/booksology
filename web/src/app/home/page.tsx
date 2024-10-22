@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import AccessControlWrapper from '../../components/AccessControlWrapper';
 
@@ -31,7 +30,7 @@ interface FeaturedBookProps extends Book {
   hasBookshopPass: boolean;
 }
 
-const FeaturedBook: React.FC<FeaturedBookProps> = ({ id, title, author, cover, hasBookshopPass }) => {
+const FeaturedBook: React.FC<FeaturedBookProps> = ({ id, title, author, cover }) => {
   const imagePath = cover ? `/images/${cover}` : '/images/default-cover.jpg';
 
   return (

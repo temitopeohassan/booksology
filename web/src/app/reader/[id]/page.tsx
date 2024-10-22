@@ -3,7 +3,6 @@ import Link from "next/link"
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Settings, Bookmark } from 'lucide-react';
-import { useAccount } from 'wagmi';
 
 type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 

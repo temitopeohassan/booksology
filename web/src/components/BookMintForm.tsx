@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { EBOOKNFT_CONTRACT_ADDRESS, EBOOKNFT_CONTRACT_ABI } from '../app/constants';
 
 export default function BookMintForm() {

@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { BookOpen, Share2, Heart } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { EBOOKNFT_CONTRACT_ADDRESS, EBOOKNFT_CONTRACT_ABI } from '../../constants';
-import { parseEther } from 'viem';
 
 
 interface Book {
@@ -32,7 +31,7 @@ export default function BookDetails() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [status, setStatus] = useState('');
   const { isConnected } = useAccount();
-  const { writeContract, data: hash, error: purchaseError, isPending } = useWriteContract();
+  const { data: hash, error: purchaseError, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isPurchased } = useWaitForTransactionReceipt({
     hash,
   });

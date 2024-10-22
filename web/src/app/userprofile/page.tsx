@@ -1,7 +1,6 @@
 "use client"
 import { User, Settings, History } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useAccessControl } from '../../contexts/AccessControlContext';
 import AccessControlWrapper from '../../components/AccessControlWrapper';
 
 
