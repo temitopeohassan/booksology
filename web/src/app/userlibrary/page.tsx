@@ -4,6 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 
+interface User {
+  id: string;
+  wallet: string;
+  // Add other properties as needed
+}
+
 export default function UserLibraryRedirect() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
@@ -40,7 +46,7 @@ export default function UserLibraryRedirect() {
           console.log('Parsed user data:', users);
 
           // Find the user with the matching wallet address
-          const user = users.find((u: any) => u.wallet === address);
+          const user = users.find((u: User) => u.wallet === address);
 
           if (user && user.id) {
             console.log('Redirecting to:', `/userlibrary/${user.id}`);

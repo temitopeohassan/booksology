@@ -56,19 +56,16 @@ export default function MintBookshopPassNFT() {
       });
       console.log('Write contract call result:', result);
       setSuccess('Minting transaction submitted. Please wait for confirmation.');
-    } catch (err: any) {
-      console.error('Error in mintNFT:', err);
-      if (err.message.includes('user rejected transaction')) {
-        setError('Transaction was rejected by the user.');
-      } else if (err.message.includes('insufficient funds')) {
-        setError('Insufficient funds to cover gas costs.');
-      } else if (err.message.includes('execution reverted')) {
-        setError('Transaction reverted. You may have already minted an NFT.');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error minting NFT:', error.message);
+        setError(`Error: ${error.message}`);
       } else {
-        setError(`Error: ${err.message || 'An unknown error occurred'}`);
+        console.error('Unknown error occurred while minting NFT');
+        setError('An unknown error occurred');
       }
       // Log the full error object for debugging
-      console.error('Full error object:', err);
+      console.error('Full error object:', error);
     } finally {
       setMinting(false);
     }

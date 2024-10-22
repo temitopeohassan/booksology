@@ -15,7 +15,6 @@ interface BookForSale {
 }
 
 export default function BooksForSale() {
-  const { hasAccess, requestAccess } = useAccessControl();
   const [booksForSale, setBooksForSale] = useState<BookForSale[]>([]);
   const [loading, setLoading] = useState(true);
 

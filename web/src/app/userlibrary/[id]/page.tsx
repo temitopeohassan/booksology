@@ -1,5 +1,5 @@
 "use client"
-import { BookOpen, Clock, BookMarked } from 'lucide-react';
+import { BookOpen, Clock } from 'lucide-react';
 import Link from "next/link"
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';

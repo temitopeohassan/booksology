@@ -2,7 +2,7 @@
 import Link from "next/link"
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Settings, Bookmark, Sun, Moon, Type, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Bookmark } from 'lucide-react';
 import { useAccount } from 'wagmi';
 
 type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
@@ -19,13 +19,12 @@ export default function Reader() {
   const bookId = params.id as string;
   console.log('Book ID from params:', bookId);
 
-  const [fontSize, setFontSize] = useState<FontSize>('medium');
-  const [theme, setTheme] = useState('light');
+  const [fontSize ] = useState<FontSize>('medium');
+  const [theme ] = useState('light');
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [bookContent, setBookContent] = useState<BookContent | null>(null);
   const [loading, setLoading] = useState(true);
-  const { address, isConnected } = useAccount();
   
   useEffect(() => {
     console.log('useEffect triggered');

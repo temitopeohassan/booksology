@@ -31,7 +31,7 @@ export default function BookDetails() {
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [status, setStatus] = useState('');
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { writeContract, data: hash, error: purchaseError, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isPurchased } = useWaitForTransactionReceipt({
     hash,
@@ -112,14 +112,6 @@ export default function BookDetails() {
 
       try {
         setStatus('Initiating purchase...');
-
-        const result = await writeContract({
-          address: EBOOKNFT_CONTRACT_ADDRESS,
-          abi: EBOOKNFT_CONTRACT_ABI,
-          functionName: 'buyEBook',
-          args: [BigInt(book.tokenID)],
-          value: parseEther(blockchainData.blockchainPrice.toString()),
-        });
 
         setStatus('Purchase transaction sent. Waiting for confirmation...');
       } catch (error) {

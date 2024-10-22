@@ -1,12 +1,9 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
-import { useAccessControl } from '../../contexts/AccessControlContext';
 import AccessControlWrapper from '../../components/AccessControlWrapper';
-import { hasBookshopPassNFT } from '@/utils/nftUtils';
 
 interface Book {
   id: number;
@@ -30,9 +27,11 @@ interface Category {
   icon: string;
 }
 
-interface FeaturedBookProps extends Book {}
+interface FeaturedBookProps extends Book {
+  hasBookshopPass: boolean;
+}
 
-const FeaturedBook: React.FC<FeaturedBookProps> = ({ id, title, author, cover }) => {
+const FeaturedBook: React.FC<FeaturedBookProps> = ({ id, title, author, cover, hasBookshopPass }) => {
   const imagePath = cover ? `/images/${cover}` : '/images/default-cover.jpg';
 
   return (
@@ -74,7 +73,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ name, icon }) => {
 };
 
 export default function Home() {
-  const { address, isConnected } = useAccount();
   const [featuredBooks, setFeaturedBooks] = useState<FeaturedBookProps[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newReleases, setNewReleases] = useState<FeaturedBookProps[]>([]);
